@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logitech 設備電量</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#08090d;
+  --bg2:#0e1018;
+  --card:#12151f;
+  --card-hover:#181c2a;
+  --text:#eef1f8;
+  --muted:#8b93a8;
+  --primary:#00e5a0;
+  --primary-dim:#00e5a033;
+  --border:#1c2030;
+  --green:#00e5a0;
+  --orange:#ffb020;
+  --red:#ff3d5a;
+}
+*{box-sizing:border-box;margin:0}
+body{
+  min-height:100vh;
+  padding:28px 16px 48px;
+  font-family:"Segoe UI",system-ui,-apple-system,"Microsoft JhengHei",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  position:relative;
+  overflow-x:hidden;
+}
+.bg-aurora{
+  position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+}
+.bg-aurora span{
+  position:absolute;border-radius:50%;filter:blur(80px);opacity:.45;
+  animation:aurora-drift 18s ease-in-out infinite alternate;
+}
+.bg-aurora span:nth-child(1){
+  width:55vmax;height:55vmax;left:-15%;top:-20%;
+  background:radial-gradient(circle,#00e5a0 0%,transparent 70%);
+  animation-duration:22s;
+}
+.bg-aurora span:nth-child(2){
+  width:50vmax;height:50vmax;right:-20%;top:10%;
+  background:radial-gradient(circle,#7b5cff 0%,transparent 70%);
+  animation-duration:26s;animation-delay:-4s;
+}
+.bg-aurora span:nth-child(3){
+  width:45vmax;height:45vmax;left:20%;bottom:-25%;
+  background:radial-gradient(circle,#00d4ff 0%,transparent 70%);
+  animation-duration:20s;animation-delay:-8s;
+}
+.bg-aurora span:nth-child(4){
+  width:40vmax;height:40vmax;right:5%;bottom:5%;
+  background:radial-gradient(circle,#ff3d8a 0%,transparent 70%);
+  animation-duration:24s;animation-delay:-12s;
+}
+.bg-aurora span:nth-child(5){
+  width:35vmax;height:35vmax;left:40%;top:30%;
+  background:radial-gradient(circle,#ffb020 0%,transparent 70%);
+  animation-duration:28s;animation-delay:-6s;opacity:.28;
+}
+@keyframes aurora-drift{
+  0%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(4%,-3%) scale(1.08)}
+  66%{transform:translate(-3%,4%) scale(.95)}
+  100%{transform:translate(2%,-2%) scale(1.05)}
+}
+.container{max-width:1100px;margin:auto;position:relative;z-index:1}
+header{margin-bottom:28px;text-align:center}
+header .badge{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:#a8ffe0;border:1px solid #00e5a055;
+  background:rgba(0,229,160,.12);padding:4px 12px;border-radius:4px;margin-bottom:12px;
+  backdrop-filter:blur(8px);
+}
+header h1{
+  margin:0 0 8px;font-size:clamp(26px,5vw,36px);font-weight:800;letter-spacing:-.02em;
+  background:linear-gradient(120deg,#fff 20%,#00e5a0 45%,#00d4ff 70%,#b794ff 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:title-shine 6s ease-in-out infinite;
+}
+@keyframes title-shine{0%,100%{background-position:0% center}50%{background-position:100% center}}
+header p{margin:0;color:var(--muted);font-size:14px;max-width:520px;margin-inline:auto}
+.card{
+  background:rgba(18,21,31,.82);border:1px solid var(--border);border-radius:16px;
+  padding:22px;margin-bottom:18px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.35);
+}
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,#00e5a0,#00d4ff,#7b5cff,transparent);
+  opacity:.55;background-size:200% 100%;animation:border-flow 8s linear infinite;
+}
+@keyframes border-flow{0%{background-position:0% 0}100%{background-position:200% 0}}
+.section-title{
+  margin:0 0 16px;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:10px;
+}
+.section-title::after{content:"";flex:1;height:1px;background:var(--border)}
+.connection-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.dot{width:12px;height:12px;border-radius:50%;background:#3a4050;flex-shrink:0;transition:all .3s}
+.dot.connected{
+  background:var(--green);box-shadow:0 0 0 4px #00e5a022,0 0 14px #00e5a088;
+  animation:pulse 2s ease infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 4px #00e5a022,0 0 14px #00e5a066}
+  50%{box-shadow:0 0 0 7px #00e5a015,0 0 22px #00e5a0aa}
+}
+.connection-text{flex:1;min-width:180px}
+.connection-text strong{display:block;margin-bottom:2px;font-size:15px}
+.muted{color:var(--muted);font-size:13px}
+.button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;align-items:center}
+button{
+  padding:10px 18px;border:1px solid var(--border);border-radius:8px;font:inherit;font-weight:650;
+  font-size:13px;cursor:pointer;background:var(--bg2);color:var(--text);transition:all .2s;letter-spacing:.02em;
+}
+button.primary{
+  background:linear-gradient(135deg,#00e5a0,#00c4d4);color:#04120c;border-color:transparent;
+  box-shadow:0 0 22px rgba(0,229,160,.35);
+}
+button.primary:hover:not(:disabled){filter:brightness(1.12);box-shadow:0 0 32px rgba(0,212,255,.45)}
+button:hover:not(:disabled):not(.primary){border-color:var(--muted);background:var(--card-hover)}
+button:disabled{cursor:not-allowed;opacity:.35}
+
+.scan-config{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-top:18px;padding:14px 16px;
+  background:rgba(14,16,24,.65);border:1px solid var(--border);border-radius:12px;
+}
+.scan-config label{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);cursor:default}
+.scan-config .cfg-title{font-weight:650;color:var(--text);font-size:13px;letter-spacing:.02em}
+.slot-stepper{display:flex;align-items:center;gap:0}
+.slot-stepper button{
+  width:36px;height:36px;padding:0;border-radius:8px;font-size:18px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;line-height:1;
+}
+.slot-stepper button:first-child{border-radius:8px 0 0 8px}
+.slot-stepper button:last-child{border-radius:0 8px 8px 0}
+.slot-value{
+  min-width:48px;height:36px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;
+  background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  color:var(--primary);
+}
+.slot-hint{font-size:12px;color:var(--muted)}
+
+.status-box{
+  padding:12px 14px;background:rgba(14,16,24,.7);border:1px solid var(--border);border-radius:10px;
+  font-size:13px;line-height:1.7;overflow-wrap:anywhere;margin-top:16px;color:var(--muted);
+}
+.status-box.error{color:#ff8a9a;background:rgba(255,61,90,.1);border-color:rgba(255,61,90,.3)}
+.status-box.success{color:#6effc0;background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3)}
+
+.devices-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.device-card{
+  border:1px solid var(--border);border-radius:14px;padding:18px;min-width:0;
+  background:linear-gradient(160deg,rgba(20,24,36,.9) 0%,rgba(12,14,22,.95) 100%);
+  position:relative;transition:border-color .25s,box-shadow .25s,transform .2s;overflow:hidden;
+}
+.device-card:hover{
+  border-color:#3a4568;box-shadow:0 10px 36px rgba(0,0,0,.45),0 0 24px rgba(0,229,160,.08);
+  transform:translateY(-2px);
+}
+.device-card::after{
+  content:"";position:absolute;top:0;right:0;width:90px;height:90px;
+  background:radial-gradient(circle at top right,rgba(0,229,160,.12),transparent 70%);pointer-events:none;
+}
+.device-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;z-index:1}
+.device-icon-wrap{
+  width:52px;height:52px;border-radius:12px;background:linear-gradient(145deg,#1a1e2e,#10131c);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+.device-icon-wrap svg{width:28px;height:28px;stroke:var(--primary);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.device-meta{flex:1;min-width:0}
+.device-title{font-weight:750;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-label{color:var(--muted);font-size:11px;margin-top:3px;letter-spacing:.03em}
+.type-badge{
+  display:inline-block;margin-top:6px;font-size:10px;font-weight:650;padding:3px 8px;border-radius:4px;
+  background:rgba(0,229,160,.12);color:#7dffc8;letter-spacing:.04em;text-transform:uppercase;
+}
+.pill{font-size:11px;font-weight:650;border-radius:6px;padding:4px 9px;background:#1e2230;color:var(--muted);white-space:nowrap;letter-spacing:.03em;flex-shrink:0}
+.pill.ok{background:rgba(0,229,160,.15);color:var(--green)}
+.pill.warn{background:rgba(255,176,32,.15);color:var(--orange)}
+.pill.bad{background:rgba(255,61,90,.15);color:var(--red)}
+.battery-row{display:flex;align-items:center;gap:16px;margin:20px 0 10px;position:relative;z-index:1}
+.battery-icon{position:relative;width:78px;height:40px;padding:3px;border:2.5px solid #3a4055;border-radius:7px;flex-shrink:0}
+.battery-icon:after{content:"";position:absolute;right:-7px;top:10px;width:5px;height:14px;background:#3a4055;border-radius:0 2px 2px 0}
+.battery-fill{height:100%;width:0;border-radius:3px;background:var(--green);transition:width .4s cubic-bezier(.22,1,.36,1),background .3s;box-shadow:0 0 10px currentColor}
+.battery-number{font-size:40px;line-height:1;font-weight:800;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.battery-label{margin-top:4px;color:var(--muted);font-size:12px}
+.progress-track{height:4px;background:#1e2230;border-radius:4px;overflow:hidden;margin:12px 0 8px;position:relative;z-index:1}
+.progress-fill{height:100%;width:0;background:var(--green);transition:width .4s cubic-bezier(.22,1,.36,1),background .3s;border-radius:4px;box-shadow:0 0 8px currentColor}
+.card-note{color:var(--muted);font-size:12px;line-height:1.6;min-height:32px;position:relative;z-index:1}
+.empty-state{
+  padding:40px 20px;text-align:center;color:var(--muted);border:1px dashed #2a3050;border-radius:12px;
+  line-height:1.8;background:rgba(14,16,24,.5);grid-column:1/-1;
+}
+.switch-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap}
+label.chk{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:var(--muted)}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--primary)}
+.footer{color:var(--muted);font-size:11px;line-height:1.8;text-align:center;padding:16px 0 0;letter-spacing:.02em}
+@media(max-width:480px){
+  .card{padding:16px}.devices-grid{grid-template-columns:1fr}
+  .battery-number{font-size:34px}.device-icon-wrap{width:44px;height:44px}.device-icon-wrap svg{width:24px;height:24px}
+}
+@media (prefers-reduced-motion: reduce){
+  .bg-aurora span,header h1,.card::before,.dot.connected{animation:none !important}
+}
+
+.toast-host{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:9999;display:flex;flex-direction:column;gap:10px;
+  pointer-events:none;width:min(420px,calc(100% - 32px));
+}
+.toast{
+  pointer-events:auto;
+  padding:12px 16px;border-radius:12px;
+  background:rgba(16,18,28,.94);border:1px solid var(--border);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 12px 40px rgba(0,0,0,.45);
+  font-size:13px;line-height:1.5;color:var(--text);
+  display:flex;align-items:flex-start;gap:10px;
+  animation:toast-in .28s cubic-bezier(.22,1,.36,1);
+}
+.toast.leaving{animation:toast-out .22s ease forwards}
+.toast.success{border-color:rgba(0,229,160,.35);box-shadow:0 12px 40px rgba(0,0,0,.45),0 0 20px rgba(0,229,160,.12)}
+.toast.error{border-color:rgba(255,61,90,.4);box-shadow:0 12px 40px rgba(0,0,0,.45),0 0 20px rgba(255,61,90,.12)}
+.toast-dot{
+  width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;
+  background:var(--muted);
+}
+.toast.success .toast-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.toast.error .toast-dot{background:var(--red);box-shadow:0 0 8px var(--red)}
+.toast-msg{flex:1;min-width:0}
+@keyframes toast-in{
+  from{opacity:0;transform:translateY(12px) scale(.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes toast-out{
+  from{opacity:1;transform:translateY(0) scale(1)}
+  to{opacity:0;transform:translateY(8px) scale(.96)}
+}
+@media (prefers-reduced-motion: reduce){
+  .toast,.toast.leaving{animation:none}
+}
+
+</style>
+</head>
+<body>
+<div class="bg-aurora" aria-hidden="true">
+  <span></span><span></span><span></span><span></span><span></span>
+</div>
+<div class="container">
+<header>
+  <h1>Logitech 設備電量</h1>
+</header>
+
+<section class="card">
+  <h2 class="section-title">接收器連線</h2>
+  <div class="connection-row">
+    <div id="connection-dot" class="dot"></div>
+    <div class="connection-text">
+      <strong id="connection-title">尚未連線</strong>
+      <div id="connection-detail" class="muted">請連接 Logitech Unifying USB 接收器</div>
+    </div>
+  </div>
+  <div class="button-row">
+    <button id="connect-btn" class="primary">連接接收器</button>
+    <button id="disconnect-btn" disabled>中斷連線</button>
+  </div>
+
+  <div class="scan-config">
+    <span class="cfg-title">掃描裝置數量</span>
+    <div class="slot-stepper">
+      <button type="button" id="slot-minus" title="減少">−</button>
+      <div class="slot-value" id="slot-count-display">6</div>
+      <button type="button" id="slot-plus" title="增加">+</button>
+    </div>
+    <span class="slot-hint" id="slot-hint">將掃描 1～6 個裝置</span>
+  </div>
+
+  <div class="button-row">
+    <button id="scan-btn" class="primary" disabled>掃描／更新所有裝置</button>
+    <button id="auto-btn" disabled>啟動自動更新</button>
+  </div>
+  <div class="switch-row">
+    <label class="chk"><input id="auto-checkbox" type="checkbox" disabled>每 30 秒自動更新</label>
+    <span id="update-time" class="muted">尚未更新</span>
+  </div>
+</section>
+
+<section class="card">
+  <h2 class="section-title">裝置電池狀態</h2>
+  <div id="devices-grid" class="devices-grid">
+    <div class="empty-state">連接接收器後，按「掃描／更新所有裝置」。<br>系統會依序檢查選定的裝置，並讀取名稱與類型。</div>
+  </div>
+  <p class="muted" style="margin:16px 0 0;line-height:1.7;font-size:12px">可上方調整要掃描的設備數量（1～6）。</p>
+</section>
+
+<div class="footer">6792@gcloud.csu.edu.tw</div>
+</div>
+<div class="toast-host" id="toast-host" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+
+const CONFIG = {
+  vendorId: 0x046D,
+  receiverProductId: 0xC52B,
+  maxSlots: 6,
+  batteryFeatureId: 0x1000,
+  deviceNameFeatureId: 0x0005,
+  reportId: 0x11,
+  reportLength: 19,
+  softwareId: 0x0B,
+  refreshInterval: 30000,
+  timeout: 1600
+};
+
+const STORAGE_KEY = "logitech_scan_slot_count";
+
+const DEVICE_TYPES = {
+  0: "鍵盤", 1: "遙控器", 2: "數字鍵盤", 3: "滑鼠", 4: "觸控板",
+  5: "軌跡球", 6: "簡報器", 7: "接收器", 8: "耳機", 9: "其他"
+};
+
+const DEVICE_ICONS = {
+  0: '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M6 11h.01M10 11h.01M14 11h.01M18 11h.01M6 15h.01M10 15h2M14 15h.01M18 15h.01"/></svg>',
+  1: '<svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="8" r="1.5"/><path d="M10 13h4M10 16h4"/></svg>',
+  2: '<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 7h.01M12 7h.01M16 7h.01M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/></svg>',
+  3: '<svg viewBox="0 0 24 24"><path d="M12 2a6 6 0 0 0-6 6v8a6 6 0 0 0 12 0V8a6 6 0 0 0-6-6z"/><path d="M12 2v6M10 8h4"/></svg>',
+  4: '<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 14h20M12 14v6"/></svg>',
+  5: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="11" r="4"/><path d="M8 18c1.5-1 3-1.5 4-1.5s2.5.5 4 1.5"/></svg>',
+  6: '<svg viewBox="0 0 24 24"><path d="M5 3h10a2 2 0 0 1 2 2v6H5V5a2 2 0 0 1 2-2z"/><path d="M5 11v8a2 2 0 0 0 2 2h6"/><path d="M15 15l4-2v6l-4-2"/><circle cx="10" cy="7" r="1"/></svg>',
+  7: '<svg viewBox="0 0 24 24"><path d="M10 4h4v4h-4z"/><path d="M8 8h8v4a4 4 0 0 1-8 0V8z"/><path d="M12 16v4"/><path d="M9 20h6"/></svg>',
+  8: '<svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14a2 2 0 0 0 2 2h1v-5H6a2 2 0 0 0-2 2z"/><path d="M20 14a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2z"/><path d="M17 18v1a2 2 0 0 1-2 2h-2"/></svg>',
+  9: '<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6M9 10h6M9 14h4"/></svg>',
+  default: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>'
+};
+
+const $ = id => document.getElementById(id);
+const ui = {
+  connect: $("connect-btn"), disconnect: $("disconnect-btn"),
+  scan: $("scan-btn"), auto: $("auto-btn"), autoCheckbox: $("auto-checkbox"),
+  dot: $("connection-dot"), connectionTitle: $("connection-title"),
+  connectionDetail: $("connection-detail"),
+  grid: $("devices-grid"),
+  updateTime: $("update-time"), toastHost: $("toast-host"),
+  slotDisplay: $("slot-count-display"), slotHint: $("slot-hint"),
+  slotMinus: $("slot-minus"), slotPlus: $("slot-plus")
+};
+
+let device = null, autoTimer = null, busy = false, requestSequence = 0;
+let pendingRequest = null, inputHandler = null, disconnectHandler = null;
+let connectionGeneration = 0, slotResults = new Map();
+let slotCount = 6;
+
+function loadSlotCount() {
+  try {
+    const v = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+    if (Number.isInteger(v) && v >= 1 && v <= CONFIG.maxSlots) slotCount = v;
+  } catch (e) {}
+}
+function saveSlotCount() {
+  try { localStorage.setItem(STORAGE_KEY, String(slotCount)); } catch (e) {}
+}
+function updateSlotUI() {
+  ui.slotDisplay.textContent = String(slotCount);
+  ui.slotHint.textContent = slotCount === 1 ? "將掃描 1 個裝置" : ("將掃描 1～" + slotCount + " 個裝置");
+  ui.slotMinus.disabled = slotCount <= 1 || busy;
+  ui.slotPlus.disabled = slotCount >= CONFIG.maxSlots || busy;
+}
+function getSlots() {
+  const slots = [];
+  for (let i = 1; i <= slotCount; i++) slots.push(i);
+  return slots;
+}
+function changeSlotCount(delta) {
+  if (busy) return;
+  const next = Math.min(CONFIG.maxSlots, Math.max(1, slotCount + delta));
+  if (next === slotCount) return;
+  slotCount = next;
+  saveSlotCount();
+  updateSlotUI();
+}
+
+function hex(v) { return "0x" + Number(v).toString(16).padStart(2, "0").toUpperCase(); }
+function bytesToHex(bytes) { return bytes.map(v => v.toString(16).padStart(2, "0")).join(" ").toUpperCase(); }
+
+function setStatus(message, type) {
+  if (type === undefined) type = "";
+  if (!ui.toastHost) return;
+  const el = document.createElement("div");
+  el.className = "toast" + (type ? " " + type : "");
+  el.innerHTML = '<span class="toast-dot"></span><span class="toast-msg"></span>';
+  el.querySelector(".toast-msg").textContent = message;
+  ui.toastHost.appendChild(el);
+  const duration = type === "error" ? 4500 : 3200;
+  setTimeout(() => {
+    el.classList.add("leaving");
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 240);
+  }, duration);
+}
+
+function setConnected(connected) {
+  ui.dot.classList.toggle("connected", connected);
+  ui.connectionTitle.textContent = connected ? "已連線" : "尚未連線";
+  ui.connectionDetail.textContent = connected ? "WebHID 已開啟接收器" : "請連接 Logitech Unifying USB 接收器";
+  ui.connect.disabled = connected;
+  ui.disconnect.disabled = !connected;
+  ui.scan.disabled = !connected || busy;
+  ui.auto.disabled = !connected;
+  ui.autoCheckbox.disabled = !connected;
+  updateSlotUI();
+}
+
+function batteryColor(level) {
+  return level <= 15 ? "var(--red)" : level <= 30 ? "var(--orange)" : "var(--green)";
+}
+function batteryText(level) {
+  return level <= 15 ? "電量偏低，建議更換電池" : level <= 30 ? "電量不足，請留意電池狀態" : "電量正常";
+}
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+function getDeviceIcon(typeCode) {
+  if (typeCode != null && DEVICE_ICONS[typeCode]) return DEVICE_ICONS[typeCode];
+  return DEVICE_ICONS.default;
+}
+
+function renderDevices() {
+  const entries = [...slotResults.values()].sort((a, b) => a.slot - b.slot);
+  if (!entries.length) {
+    ui.grid.innerHTML = '<div class="empty-state">尚未找到可讀取電量的裝置。<br>可以重新掃描，並確認裝置已配對至接收器。</div>';
+    return;
+  }
+  ui.grid.innerHTML = entries.map(item => {
+    const level = item.level;
+    const hasLevel = Number.isInteger(level);
+    const color = hasLevel ? batteryColor(level) : "var(--muted)";
+    const pillClass = hasLevel ? (level <= 15 ? "bad" : level <= 30 ? "warn" : "ok") : "warn";
+    const status = hasLevel ? "已讀取" : (item.status || "無電量資料");
+    const width = hasLevel ? level : 0;
+    const note = hasLevel ? batteryText(level) : (item.note || "此槽位未取得可用的電池百分比。");
+    const displayName = item.deviceName || ("Logitech 裝置槽位 " + item.slot);
+    const typeLabel = item.deviceTypeLabel || "";
+    const typeBadge = typeLabel ? ('<span class="type-badge">' + escapeHtml(typeLabel) + "</span>") : "";
+    const iconSvg = getDeviceIcon(item.deviceType);
+    return '<article class="device-card"><div class="device-head"><div class="device-icon-wrap">' + iconSvg +
+      '</div><div class="device-meta"><div class="device-title">' + escapeHtml(displayName) +
+      '</div><div class="slot-label">HID++ 槽位 ' + item.slot + (item.deviceName ? "" : " · 名稱未讀取") +
+      "</div>" + typeBadge + '</div><span class="pill ' + pillClass + '">' + escapeHtml(status) +
+      '</span></div><div class="battery-row"><div class="battery-icon"><div class="battery-fill" style="width:' +
+      width + "%;background:" + color + ";color:" + color + '"></div></div><div><div class="battery-number" style="color:' +
+      color + '">' + (hasLevel ? level + "%" : "--") + '</div><div class="battery-label">' +
+      (hasLevel ? "目前電量" : "無法讀取電量") + '</div></div></div><div class="progress-track"><div class="progress-fill" style="width:' +
+      width + "%;background:" + color + ";color:" + color + '"></div></div><div class="card-note">' +
+      escapeHtml(note) + "</div></article>";
+  }).join("");
+}
+
+function cancelPendingRequest(reason) {
+  if (!pendingRequest) return;
+  const pending = pendingRequest;
+  pendingRequest = null;
+  clearTimeout(pending.timer);
+  pending.device.removeEventListener("inputreport", pending.handler);
+  pending.reject(new Error(reason));
+}
+
+function handleDisconnect(targetDevice) {
+  if (targetDevice === undefined) targetDevice = device;
+  if (!targetDevice || targetDevice !== device) return;
+  connectionGeneration++;
+  stopAutoUpdate();
+  cancelPendingRequest("裝置已中斷連線");
+  if (device && inputHandler) device.removeEventListener("inputreport", inputHandler);
+  if (device && disconnectHandler) device.removeEventListener("disconnect", disconnectHandler);
+  device = null; inputHandler = null; disconnectHandler = null;
+  slotResults.clear(); renderDevices(); setConnected(false);
+  setStatus("接收器已中斷連線。", "error");
+}
+
+function requestHIDPP(slot, featureIndex, functionId, params) {
+  if (params === undefined) params = [];
+  if (!device || !device.opened) return Promise.reject(new Error("接收器尚未連線"));
+  if (pendingRequest) return Promise.reject(new Error("已有 HID++ 請求正在等待回應"));
+  const currentDevice = device, currentGeneration = connectionGeneration, sequence = ++requestSequence;
+  const packet = new Uint8Array(CONFIG.reportLength);
+  packet[0] = slot; packet[1] = featureIndex;
+  packet[2] = ((functionId & 0x0F) << 4) | CONFIG.softwareId;
+  params.forEach((value, index) => { if (index + 3 < packet.length) packet[index + 3] = value; });
+  return new Promise((resolve, reject) => {
+    let settled = false, timer;
+    const cleanup = () => {
+      if (timer) clearTimeout(timer);
+      currentDevice.removeEventListener("inputreport", handler);
+      if (pendingRequest && pendingRequest.sequence === sequence) pendingRequest = null;
+    };
+    const fail = error => { if (settled) return; settled = true; cleanup(); reject(error); };
+    const handler = event => {
+      if (currentGeneration !== connectionGeneration) return;
+      const bytes = Array.from(new Uint8Array(event.data.buffer, event.data.byteOffset, event.data.byteLength));
+      if (event.reportId !== CONFIG.reportId || bytes.length < 3) return;
+      if (bytes[0] === slot && bytes[1] === featureIndex && (bytes[2] >> 4) === 0x0F) {
+        fail(new Error("HID++ 裝置錯誤回應：" + bytesToHex(bytes))); return;
+      }
+      const expected = ((functionId & 0x0F) << 4) | CONFIG.softwareId;
+      if (bytes[0] !== slot || bytes[1] !== featureIndex || bytes[2] !== expected) return;
+      if (settled) return; settled = true; cleanup(); resolve(bytes);
+    };
+    timer = setTimeout(() => fail(new Error("等待 HID++ 回應逾時")), CONFIG.timeout);
+    pendingRequest = { sequence, timer, handler, reject: e => fail(e), device: currentDevice };
+    currentDevice.addEventListener("inputreport", handler);
+    currentDevice.sendReport(CONFIG.reportId, packet).catch(error => fail(error));
+  });
+}
+
+async function getFeatureIndex(slot, featureId) {
+  const response = await requestHIDPP(slot, 0x00, 0x00, [(featureId >> 8) & 0xFF, featureId & 0xFF]);
+  const index = response[3];
+  if (index === 0 || index === 0xFF) throw new Error("槽位 " + slot + " 不支援 Feature " + hex(featureId));
+  return index;
+}
+
+async function readDeviceNameAndType(slot, generation) {
+  const result = { deviceName: null, deviceType: null, deviceTypeLabel: null };
+  try {
+    const nameIndex = await getFeatureIndex(slot, CONFIG.deviceNameFeatureId);
+    if (generation !== connectionGeneration || !device) return result;
+    const countResp = await requestHIDPP(slot, nameIndex, 0, []);
+    if (generation !== connectionGeneration || !device) return result;
+    const length = countResp[3];
+    if (Number.isInteger(length) && length >= 1 && length <= 64) {
+      const chunks = [];
+      let offset = 0;
+      while (offset < length) {
+        if (generation !== connectionGeneration || !device) return result;
+        const chunkResp = await requestHIDPP(slot, nameIndex, 1, [offset]);
+        const payload = chunkResp.slice(3);
+        for (let i = 0; i < payload.length && chunks.length < length; i++) {
+          if (payload[i] === 0) break;
+          chunks.push(payload[i]);
+        }
+        offset += 16;
+        if (payload.every(b => b === 0)) break;
+      }
+      try {
+        result.deviceName = new TextDecoder("utf-8").decode(new Uint8Array(chunks)).trim() || null;
+      } catch (e) {
+        result.deviceName = String.fromCharCode(...chunks.filter(c => c >= 32 && c < 127)).trim() || null;
+      }
+    }
+    if (generation === connectionGeneration && device) {
+      try {
+        const typeResp = await requestHIDPP(slot, nameIndex, 2, []);
+        const typeCode = typeResp[3];
+        result.deviceType = typeCode;
+        result.deviceTypeLabel = DEVICE_TYPES[typeCode] != null ? DEVICE_TYPES[typeCode] : ("類型 " + typeCode);
+      } catch (err) {}
+    }
+  } catch (err) {}
+  return result;
+}
+
+async function scanSlot(slot, generation) {
+  const entry = {
+    slot, level: null, status: "掃描中", note: "正在查詢裝置名稱與電池功能…",
+    deviceName: null, deviceType: null, deviceTypeLabel: null
+  };
+  slotResults.set(slot, entry); renderDevices();
+  try {
+    const nameInfo = await readDeviceNameAndType(slot, generation);
+    if (generation !== connectionGeneration || !device) return;
+    entry.deviceName = nameInfo.deviceName;
+    entry.deviceType = nameInfo.deviceType;
+    entry.deviceTypeLabel = nameInfo.deviceTypeLabel;
+    entry.note = nameInfo.deviceName ? ("已讀取名稱「" + nameInfo.deviceName + "」，正在查詢電池…") : "正在查詢電池功能…";
+    renderDevices();
+  } catch (err) {}
+  try {
+    const featureIndex = await getFeatureIndex(slot, CONFIG.batteryFeatureId);
+    if (generation !== connectionGeneration || !device) return;
+    entry.featureIndex = featureIndex; entry.status = "讀取中";
+    entry.note = "已找到 Battery Status Feature（" + hex(featureIndex) + "），正在讀取電量。";
+    renderDevices();
+    const response = await requestHIDPP(slot, featureIndex, 0);
+    if (generation !== connectionGeneration || !device) return;
+    const level = response[3];
+    if (!Number.isInteger(level) || level < 0 || level > 100) throw new Error("電量值不合理：" + level);
+    entry.level = level; entry.status = "已讀取"; entry.note = batteryText(level);
+  } catch (error) {
+    if (generation !== connectionGeneration || !device) return;
+    entry.level = null;
+    entry.status = error.message.indexOf("不支援") !== -1 ? "不支援" : "無回應";
+    entry.note = error.message.indexOf("不支援") !== -1 ? error.message
+      : "未取得電池回應；可能是未配對、裝置休眠、逾時或不支援此電池功能。";
+  }
+  slotResults.set(slot, entry); renderDevices();
+}
+
+async function scanAllDevices() {
+  if (!device || !device.opened) { setStatus("請先連接接收器。", "error"); return; }
+  if (busy) return;
+  busy = true;
+  const generation = connectionGeneration;
+  const slots = getSlots();
+  setConnected(true); ui.scan.disabled = true;
+  slotResults.clear(); renderDevices();
+  setStatus("正在掃描 1～" + slotCount + " 個裝置（名稱＋電量）…");
+  try {
+    for (const slot of slots) {
+      if (generation !== connectionGeneration || !device) break;
+      await scanSlot(slot, generation);
+    }
+    if (generation === connectionGeneration && device) {
+      let found = 0, named = 0;
+      slotResults.forEach(x => { if (x.level !== null) found++; if (x.deviceName) named++; });
+      setStatus("掃描完成：找到 " + found + " 個可讀取電量的裝置，其中 " + named + " 個成功讀取名稱。", found ? "success" : "");
+      ui.updateTime.textContent = "更新於 " + new Date().toLocaleTimeString();
+    }
+  } finally {
+    busy = false; setConnected(!!device && device.opened);
+  }
+}
+
+async function connectReceiver() {
+  if (!("hid" in navigator)) { setStatus("此瀏覽器不支援 WebHID，請使用最新版 Chrome 或 Edge。", "error"); return; }
+  if (!window.isSecureContext) { setStatus("WebHID 需要安全環境，請使用 localhost 或 HTTPS。", "error"); return; }
+  ui.connect.disabled = true;
+  try {
+    const devices = await navigator.hid.requestDevice({
+      filters: [
+        { vendorId: CONFIG.vendorId, productId: CONFIG.receiverProductId, usagePage: 0xFF00, usage: 0x0002 },
+        { vendorId: CONFIG.vendorId, productId: CONFIG.receiverProductId, usagePage: 0xFF00, usage: 0x0001 }
+      ]
+    });
+    if (!devices.length) { setStatus("你沒有選擇接收器。"); return; }
+    const selected = devices.find(d => d.collections && d.collections.some(c => c.usagePage === 0xFF00 && c.usage === 0x0002))
+      || devices.find(d => d.collections && d.collections.some(c => c.usagePage === 0xFF00 && c.usage === 0x0001))
+      || devices[0];
+    if (selected.vendorId !== CONFIG.vendorId || selected.productId !== CONFIG.receiverProductId)
+      throw new Error("選取的裝置不是預期的 Unifying 接收器");
+    if (!selected.opened) await selected.open();
+    device = selected; connectionGeneration++; slotResults.clear();
+    setConnected(true);
+    inputHandler = () => {};
+    disconnectHandler = () => handleDisconnect(selected);
+    device.addEventListener("inputreport", inputHandler);
+    device.addEventListener("disconnect", disconnectHandler);
+    setStatus("接收器已連線。開始掃描 1～" + slotCount + " 個裝置。", "success");
+    await scanAllDevices();
+  } catch (error) {
+    setStatus("連線失敗：" + error.message, "error");
+  } finally {
+    if (!device) ui.connect.disabled = false;
+  }
+}
+
+function stopAutoUpdate() {
+  if (autoTimer !== null) { clearInterval(autoTimer); autoTimer = null; }
+  ui.autoCheckbox.checked = false; ui.auto.textContent = "啟動自動更新";
+}
+
+function toggleAutoUpdate() {
+  if (autoTimer !== null) { stopAutoUpdate(); setStatus("已停止自動更新。"); return; }
+  if (!device || !device.opened) { setStatus("請先連接接收器。", "error"); ui.autoCheckbox.checked = false; return; }
+  ui.autoCheckbox.checked = true; ui.auto.textContent = "停止自動更新";
+  autoTimer = setInterval(() => { if (!busy && device && device.opened) scanAllDevices(); }, CONFIG.refreshInterval);
+  setStatus("自動更新已啟動，每 30 秒掃描一次。", "success");
+}
+
+async function disconnectReceiver() {
+  stopAutoUpdate();
+  const oldDevice = device;
+  if (oldDevice) {
+    handleDisconnect(oldDevice);
+    if (oldDevice.opened) {
+      try { await oldDevice.close(); } catch (e) {}
+    }
+  }
+  ui.connect.disabled = false;
+}
+
+ui.connect.addEventListener("click", connectReceiver);
+ui.disconnect.addEventListener("click", disconnectReceiver);
+ui.scan.addEventListener("click", scanAllDevices);
+ui.auto.addEventListener("click", toggleAutoUpdate);
+ui.autoCheckbox.addEventListener("change", () => {
+  if (ui.autoCheckbox.checked) toggleAutoUpdate();
+  else if (autoTimer !== null) { stopAutoUpdate(); setStatus("已停止自動更新。"); }
+});
+ui.slotMinus.addEventListener("click", () => changeSlotCount(-1));
+ui.slotPlus.addEventListener("click", () => changeSlotCount(1));
+
+if ("hid" in navigator) {
+  navigator.hid.addEventListener("disconnect", event => {
+    if (device === event.device) handleDisconnect(event.device);
+  });
+}
+
+loadSlotCount();
+updateSlotUI();
+setConnected(false);
+})();
+</script>
+</body>
+</html>
